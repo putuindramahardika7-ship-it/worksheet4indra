@@ -13,8 +13,11 @@ class IdentityBanner extends StatelessWidget {
         padding: EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.person, size: 36),
-            SizedBox(width: 12),
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: AssetImage('assets/images/profile.jpg'),
+            ),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
