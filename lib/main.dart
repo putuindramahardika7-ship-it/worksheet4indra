@@ -254,7 +254,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 20),
 
                   // TAHAP 5: GridView Responsif & CourseCard Reusable
-                  const Tahap5Card(),
+                  Tahap5Card(coursesList: courses),
                   const SizedBox(height: 20),
 
                   // Card Profil
@@ -515,7 +515,8 @@ class _Tahap4CardState extends State<Tahap4Card> {
 
 // TAHAP 5: Widget Reusable untuk Responsive GridView dengan CourseCard
 class Tahap5Card extends StatelessWidget {
-  const Tahap5Card({super.key});
+  final List<dynamic>? coursesList;
+  const Tahap5Card({super.key, this.coursesList});
 
   int columnsFor(double width) {
     if (width < 600) return 1;
@@ -525,6 +526,10 @@ class Tahap5Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final list = (coursesList != null && coursesList!.isNotEmpty)
+        ? coursesList!
+        : course_data.courses;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final int cols = columnsFor(constraints.maxWidth);
@@ -558,7 +563,7 @@ class Tahap5Card extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Lebar: ${constraints.maxWidth.toStringAsFixed(0)} px | Kolom Grid: $cols Kolom',
+                  'Total: ${list.length} Mata Kuliah | Lebar: ${constraints.maxWidth.toStringAsFixed(0)} px | Grid: $cols Kolom',
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
@@ -572,9 +577,14 @@ class Tahap5Card extends StatelessWidget {
                     mainAxisSpacing: 10,
                     mainAxisExtent: 130, // tinggi kartu tetap -> tidak overflow
                   ),
-                  itemCount: course_data.courses.length,
-                  itemBuilder: (context, index) =>
-                      CourseCard(course: course_data.courses[index]),
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    final item = list[index];
+                    final courseMap = item is Map<String, dynamic>
+                        ? item
+                        : Map<String, dynamic>.from(item as Map);
+                    return CourseCard(course: courseMap);
+                  },
                 ),
               ],
             ),
@@ -584,4 +594,5 @@ class Tahap5Card extends StatelessWidget {
     );
   }
 }
+
 
