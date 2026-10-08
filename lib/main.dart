@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'data/courses.dart' as course_data;
+import 'widgets/course_card.dart';
 
 const String studentName = 'Putu Indra Mahardika';
 const String studentId = '2415051003';
@@ -249,6 +251,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   // TAHAP 4: Expanded, Flexible, dan Wrap
                   const Tahap4Card(),
+                  const SizedBox(height: 20),
+
+                  // TAHAP 5: GridView Responsif & CourseCard Reusable
+                  const Tahap5Card(),
                   const SizedBox(height: 20),
 
                   // Card Profil
@@ -505,4 +511,77 @@ class _Tahap4CardState extends State<Tahap4Card> {
       ),
     );
   }
-}
+}
+
+// TAHAP 5: Widget Reusable untuk Responsive GridView dengan CourseCard
+class Tahap5Card extends StatelessWidget {
+  const Tahap5Card({super.key});
+
+  int columnsFor(double width) {
+    if (width < 600) return 1;
+    if (width < 840) return 2;
+    return 3;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final int cols = columnsFor(constraints.maxWidth);
+
+        return Card(
+          elevation: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tahap 5: GridView Responsif',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Divider(),
+                // Header identitas selalu terlihat
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    '$studentId - $studentName',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Lebar: ${constraints.maxWidth.toStringAsFixed(0)} px | Kolom Grid: $cols Kolom',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 12),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    mainAxisExtent: 130, // tinggi kartu tetap -> tidak overflow
+                  ),
+                  itemCount: course_data.courses.length,
+                  itemBuilder: (context, index) =>
+                      CourseCard(course: course_data.courses[index]),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
