@@ -247,6 +247,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 20),
 
+                  // TAHAP 4: Expanded, Flexible, dan Wrap
+                  const Tahap4Card(),
+                  const SizedBox(height: 20),
+
                   // Card Profil
                   Card(
                     elevation: 4,
@@ -399,3 +403,106 @@ class _GreetingCardState extends State<GreetingCard> {
     );
   }
 }
+
+// TAHAP 4: Widget Reusable untuk Demonstrasi Expanded flex 2:1 & Wrap
+class Tahap4Card extends StatefulWidget {
+  const Tahap4Card({super.key});
+
+  @override
+  State<Tahap4Card> createState() => _Tahap4CardState();
+}
+
+class _Tahap4CardState extends State<Tahap4Card> {
+  bool useWrap = true;
+
+  final List<String> skills = const [
+    'Dart',
+    'Flutter',
+    'Git',
+    'UI Design',
+    'JSON',
+    'Navigation',
+    'Responsive',
+    'State',
+  ];
+
+  Widget buildBox(String label, Color color) {
+    return Container(
+      height: 60,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = skills.map((e) => Chip(label: Text(e))).toList();
+
+    return Card(
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tahap 4: Expanded, Flexible & Wrap',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const Divider(),
+            Text('Identitas: $studentId - $studentName'),
+            const SizedBox(height: 12),
+            const Text(
+              'Expanded flex 2 : 1',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: buildBox('A (flex 2)', Colors.blue.shade200),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: buildBox('B (flex 1)', Colors.green.shade200),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'Pakai Wrap (matikan = Row biasa)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                useWrap ? 'Mode: Wrap responsif' : 'Mode: Row biasa (memicu overflow jika sempit)',
+              ),
+              value: useWrap,
+              onChanged: (v) => setState(() => useWrap = v),
+            ),
+            const SizedBox(height: 8),
+            useWrap
+                ? Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: chips,
+                  )
+                : Row(children: chips),
+          ],
+        ),
+      ),
+    );
+  }
+}
