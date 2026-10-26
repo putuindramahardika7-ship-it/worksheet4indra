@@ -1,0 +1,10 @@
+[33m7c1e969[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Selesai implementasi tahap navigasi dan interaksi - Putu Indra Mahardika
+[33mf02ece0[m Tahap 5: Implementasi responsif GridView berdasarkan breakpoint - Putu Indra Mahardika
+[33m0bd5e24[m[33m ([m[1;31morigin/main[m[33m)[m feat: Worksheet 5 - Responsive Layout and Navigation complete - main.dart bootstrap ke ResponsiveShell - responsive_shell.dart adaptive nav NavigationBar/NavigationRail - home_page stat cards Expanded flex Wrap skill chips MediaQuery info - courses_page LayoutBuilder GridView 1-2-3 kolom tap detail long-press dialog - course_detail_page animated fav toggle BackButton return value - profile_page IdentityBanner info rows FeedbackForm - Identitas: Putu Indra Mahardika 2415051003 foto profil tetap
+[33meb6a58f[m Rapikan dan harmonisasikan layout Dashboard Worksheet 4 dan Worksheet 5 (Tahap 1-5)
+[33me466e1c[m Harmonisasi Tahap 1-5 dengan Worksheet 4: sinkronkan 5 materi dari JSON dan status
+[33m58004b3[m Tahap 5: tambahkan responsive GridView dengan CourseCard
+[33m4004bc8[m Tahap 4: tambahkan demonstrasi Expanded flex 2:1 dan Wrap
+[33m388041f[m Tahap 3: integrasikan LayoutBuilder dan Breakpoint pada Dashboard
+[33m48f5d93[m Tahap 1 aktif pada main.dart
+[33m9b914cd[m Update widget test untuk CourseExplorerApp
