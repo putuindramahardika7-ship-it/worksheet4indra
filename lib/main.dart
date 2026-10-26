@@ -1,36 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'models/course.dart'; // Import model Course
+import 'models/course.dart';
+import 'services/course_api_service.dart'; // Import service baru
 
 const String studentName = 'Putu Indra Mahardika';
 const String studentId = '2415051003';
-
-// =========================================================================
-// TAHAP 2 & 3: URL Endpoint dan Fungsi HTTP GET dengan Model
-// =========================================================================
-const String apiUrl = 'https://course-api-pearl.vercel.app/courses';
-
-Future<void> fetchCourses() async {
-  try {
-    final response = await http.get(Uri.parse(apiUrl));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      // TAHAP 3: Mengonversi JSON menjadi List<Course>
-      final List<Course> fetchedCourses = data.map((json) => Course.fromJson(json)).toList();
-      debugPrint('Berhasil GET! Jumlah course dari API: ${fetchedCourses.length}');
-      if (fetchedCourses.isNotEmpty) {
-        debugPrint('Contoh course pertama: ${fetchedCourses[0].title} - Status: ${fetchedCourses[0].status}');
-      }
-    } else {
-      debugPrint('Gagal! Status HTTP: ${response.statusCode}');
-    }
-  } catch (e) {
-    debugPrint('Terjadi error jaringan: $e');
-  }
-}
-// =========================================================================
+// TAHAP 4: Hanya menyimpan Base URL saja
+const String apiBaseUrl = 'https://course-api-pearl.vercel.app'; 
 
 void main() {
   runApp(
@@ -42,7 +18,7 @@ void main() {
 }
 
 // -------------------------------------------------------------------------
-// TAHAP 3: CourseProvider menggunakan Model Course
+// CourseProvider menggunakan Model Course
 // -------------------------------------------------------------------------
 class CourseProvider extends ChangeNotifier {
   final List<Course> _courses = [
@@ -71,7 +47,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 3',
+      title: 'Course Explorer v2 - Tahap 4',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -87,7 +63,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 3: Model Dart JSON'),
+        title: const Text('Tahap 4: Service Layer'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -125,7 +101,6 @@ class ProviderScreen extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     child: ListTile(
                       title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      // TAHAP 3: Menampilkan status di UI
                       subtitle: Text('Kode: ${course.code} | SKS: ${course.credits} | Status: ${course.status.toUpperCase()}'),
                       trailing: IconButton(
                         icon: Icon(course.isFavorite ? Icons.favorite : Icons.favorite_border, color: course.isFavorite ? Colors.red : Colors.grey),
@@ -141,8 +116,17 @@ class ProviderScreen extends StatelessWidget {
           ],
         ),
       ),
+      // TAHAP 4: Memanggil method dari Service API
       floatingActionButton: FloatingActionButton(
-        onPressed: fetchCourses,
+        onPressed: () async {
+          try {
+            final service = CourseApiService(apiBaseUrl);
+            final fetchedCourses = await service.getCourses();
+            debugPrint('Berhasil GET via Service! Jumlah course: ${fetchedCourses.length}');
+          } catch (e) {
+            debugPrint('Error: $e');
+          }
+        },
         child: const Icon(Icons.download),
       ),
     );
