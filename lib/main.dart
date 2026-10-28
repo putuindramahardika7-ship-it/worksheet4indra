@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase SDK
 import 'models/course.dart';
 import 'services/course_api_service.dart';
 import 'repositories/course_repository.dart';
@@ -10,8 +11,19 @@ const String studentName = 'Putu Indra Mahardika';
 const String studentId = '2415051003';
 const String apiBaseUrl = 'https://course-api-pearl.vercel.app'; 
 
-void main() {
-  // TAHAP 9: Assembly Service -> Repository -> Provider
+// TAHAP 10: Konfigurasi Supabase (Ganti dengan URL dan Anon Key project Supabase Anda)
+const String supabaseUrl = 'HTTPS://YOUR-SUPABASE-PROJECT-URL.supabase.co';
+const String supabaseAnonKey = 'YOUR-SUPABASE-ANON-KEY';
+
+Future<void> main() async {
+  // TAHAP 10: Inisialisasi binding dan Supabase Client
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+
   final repository = CourseRepository(CourseApiService(apiBaseUrl));
 
   runApp(
@@ -115,7 +127,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 9',
+      title: 'Course Explorer v2 - Tahap 10',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -167,7 +179,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 9: Repository Pattern'),
+        title: const Text('Tahap 10: Supabase Setup'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -202,7 +214,7 @@ class ProviderScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Daftar Kursus (via Repository):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Daftar Kursus:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
 
             Expanded(
