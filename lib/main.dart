@@ -42,9 +42,10 @@ class CourseProvider extends ChangeNotifier {
   String? _error;
   StreamSubscription<List<Course>>? _coursesSubscription;
 
-  // TAHAP 17: State Pencarian & Filter Status
+  // TAHAP 17 & 18: State Pencarian, Filter & Sorting
   String _searchQuery = '';
   String _selectedStatus = 'all';
+  String _sortBy = 'title_asc'; // 'title_asc', 'title_desc', 'credits_desc', 'credits_asc'
 
   List<Course> get courses => _courses;
   bool get isLoading => _isLoading;
@@ -52,17 +53,46 @@ class CourseProvider extends ChangeNotifier {
   String? get error => _error;
   String get searchQuery => _searchQuery;
   String get selectedStatus => _selectedStatus;
+  String get sortBy => _sortBy;
 
   int get favoriteCount => _courses.where((c) => c.isFavorite).length;
 
-  // TAHAP 17: Logika Filter & Search
+  // TAHAP 18: Perhitungan Total SKS Selesai & Aktif
+  int get totalDoneCredits => _courses
+      .where((c) => c.status == 'done')
+      .fold(0, (sum, item) => sum + item.credits);
+
+  int get totalActiveCredits => _courses
+      .where((c) => c.status == 'active')
+      .fold(0, (sum, item) => sum + item.credits);
+
+  // TAHAP 17 & 18: Getter Filter + Search + Sorting
   List<Course> get filteredCourses {
-    return _courses.where((course) {
+    List<Course> list = _courses.where((course) {
       final matchesQuery = course.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           course.code.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchesStatus = _selectedStatus == 'all' || course.status == _selectedStatus;
       return matchesQuery && matchesStatus;
     }).toList();
+
+    // Logika Pengurutan
+    switch (_sortBy) {
+      case 'title_desc':
+        list.sort((a, b) => b.title.compareTo(a.title));
+        break;
+      case 'credits_desc':
+        list.sort((a, b) => b.credits.compareTo(a.credits));
+        break;
+      case 'credits_asc':
+        list.sort((a, b) => a.credits.compareTo(b.credits));
+        break;
+      case 'title_asc':
+      default:
+        list.sort((a, b) => a.title.compareTo(b.title));
+        break;
+    }
+
+    return list;
   }
 
   void setSearchQuery(String query) {
@@ -72,6 +102,11 @@ class CourseProvider extends ChangeNotifier {
 
   void setSelectedStatus(String status) {
     _selectedStatus = status;
+    notifyListeners();
+  }
+
+  void setSortBy(String sortOption) {
+    _sortBy = sortOption;
     notifyListeners();
   }
 
@@ -160,7 +195,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 17',
+      title: 'Course Explorer v2 - Tahap 18',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -213,7 +248,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 17: Search & Filter Data'),
+        title: const Text('Tahap 18: Sorting & Analytics'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -233,23 +268,41 @@ class ProviderScreen extends StatelessWidget {
           children: [
             const Text('$studentId\n$studentName', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
+
+            // TAHAP 18: Ringkasan SKS & Favorit Card
             Card(
               color: Colors.blue.shade50,
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    const Text('Total Kursus Favorit:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text('${courseProvider.favoriteCount}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue)),
+                    Column(
+                      children: [
+                        const Text('Favorit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text('${courseProvider.favoriteCount}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        const Text('SKS Active', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text('${courseProvider.totalActiveCredits}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange)),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        const Text('SKS Done', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text('${courseProvider.totalDoneCredits}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                      ],
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
-            // TAHAP 17: Search Bar Field
+            // TAHAP 17: Search Bar
             TextField(
               onChanged: (value) => courseProvider.setSearchQuery(value),
               decoration: InputDecoration(
@@ -267,22 +320,39 @@ class ProviderScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // TAHAP 17: Filter Choice Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip(context, 'Semua', 'all'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(context, 'Planned', 'planned'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(context, 'Active', 'active'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(context, 'Done', 'done'),
-                ],
-              ),
+            // TAHAP 17 & 18: Filter Chips & Sorting Dropdown
+            Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip(context, 'Semua', 'all'),
+                        const SizedBox(width: 6),
+                        _buildFilterChip(context, 'Planned', 'planned'),
+                        const SizedBox(width: 6),
+                        _buildFilterChip(context, 'Active', 'active'),
+                        const SizedBox(width: 6),
+                        _buildFilterChip(context, 'Done', 'done'),
+                      ],
+                    ),
+                  ),
+                ),
+                // TAHAP 18: Dropdown Sorting
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.sort, color: Colors.blue),
+                  onSelected: (value) => courseProvider.setSortBy(value),
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'title_asc', child: Text('Judul (A-Z)')),
+                    PopupMenuItem(value: 'title_desc', child: Text('Judul (Z-A)')),
+                    PopupMenuItem(value: 'credits_desc', child: Text('SKS (Terbanyak)')),
+                    PopupMenuItem(value: 'credits_asc', child: Text('SKS (Tersedikit)')),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             Text('Daftar Kursus (${displayCourses.length}):', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
