@@ -28,7 +28,6 @@ class CourseSupabaseService implements CourseDataSource {
     return Course.fromJson(response);
   }
 
-  // TAHAP 14: Memperbarui (UPDATE) data course di tabel 'courses' Supabase
   @override
   Future<void> updateCourse(int id, Course course) async {
     await _client
@@ -37,8 +36,12 @@ class CourseSupabaseService implements CourseDataSource {
         .eq('id', id);
   }
 
+  // TAHAP 15: Menghapus (DELETE) data course di tabel 'courses' Supabase berdasarkan ID
   @override
   Future<void> deleteCourse(int id) async {
-    throw UnimplementedError('Akan diimplementasikan di Tahap 15');
+    await _client
+        .from('courses')
+        .delete()
+        .eq('id', id);
   }
 }

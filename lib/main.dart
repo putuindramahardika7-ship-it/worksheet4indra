@@ -124,7 +124,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 14',
+      title: 'Course Explorer v2 - Tahap 15',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -154,7 +154,7 @@ class ProviderScreen extends StatelessWidget {
                 if (!context.mounted) return;
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Course berhasil dihapus!'), backgroundColor: Colors.red),
+                    const SnackBar(content: Text('Course berhasil dihapus dari Supabase!'), backgroundColor: Colors.red),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +176,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 14: Supabase UPDATE'),
+        title: const Text('Tahap 15: Supabase DELETE'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
