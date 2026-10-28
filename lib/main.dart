@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase SDK
+import 'package:supabase_flutter/supabase_flutter.dart'; 
 import 'models/course.dart';
 import 'services/course_api_service.dart';
 import 'repositories/course_repository.dart';
@@ -12,8 +12,8 @@ const String studentId = '2415051003';
 const String apiBaseUrl = 'https://course-api-pearl.vercel.app'; 
 
 // TAHAP 10: Konfigurasi Supabase (Ganti dengan URL dan Anon Key project Supabase Anda)
-const String supabaseUrl = 'HTTPS://YOUR-SUPABASE-PROJECT-URL.supabase.co';
-const String supabaseAnonKey = 'YOUR-SUPABASE-ANON-KEY';
+const String supabaseUrl = 'https://nwbggednoovhykmrcfnt.supabase.co';
+const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53YmdnZWRub292aHlrbXJjZm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxNzcwNzIsImV4cCI6MjEwODc1MzA3Mn0.Fo0Mi9QUJpuSdIXYEorwOaC3yvvfoD_qxAYoPsFligY';
 
 Future<void> main() async {
   // TAHAP 10: Inisialisasi binding dan Supabase Client
