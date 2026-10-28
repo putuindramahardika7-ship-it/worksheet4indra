@@ -42,14 +42,39 @@ class CourseProvider extends ChangeNotifier {
   String? _error;
   StreamSubscription<List<Course>>? _coursesSubscription;
 
+  // TAHAP 17: State Pencarian & Filter Status
+  String _searchQuery = '';
+  String _selectedStatus = 'all';
+
   List<Course> get courses => _courses;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get error => _error;
+  String get searchQuery => _searchQuery;
+  String get selectedStatus => _selectedStatus;
 
   int get favoriteCount => _courses.where((c) => c.isFavorite).length;
 
-  // TAHAP 16: Berlangganan data Realtime dari Supabase Stream
+  // TAHAP 17: Logika Filter & Search
+  List<Course> get filteredCourses {
+    return _courses.where((course) {
+      final matchesQuery = course.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          course.code.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesStatus = _selectedStatus == 'all' || course.status == _selectedStatus;
+      return matchesQuery && matchesStatus;
+    }).toList();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void setSelectedStatus(String status) {
+    _selectedStatus = status;
+    notifyListeners();
+  }
+
   void listenToCoursesStream() {
     _isLoading = true;
     _error = null;
@@ -135,7 +160,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 16',
+      title: 'Course Explorer v2 - Tahap 17',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -184,10 +209,11 @@ class ProviderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final courseProvider = context.watch<CourseProvider>();
+    final displayCourses = courseProvider.filteredCourses;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 16: Supabase Realtime Stream'),
+        title: const Text('Tahap 17: Search & Filter Data'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -221,8 +247,44 @@ class ProviderScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('Daftar Kursus (Realtime Live Sync):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+
+            // TAHAP 17: Search Bar Field
+            TextField(
+              onChanged: (value) => courseProvider.setSearchQuery(value),
+              decoration: InputDecoration(
+                hintText: 'Cari kode atau judul course...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: courseProvider.searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => courseProvider.setSearchQuery(''),
+                      )
+                    : null,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // TAHAP 17: Filter Choice Chips
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterChip(context, 'Semua', 'all'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(context, 'Planned', 'planned'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(context, 'Active', 'active'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(context, 'Done', 'done'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            Text('Daftar Kursus (${displayCourses.length}):', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
 
             Expanded(
@@ -230,12 +292,12 @@ class ProviderScreen extends StatelessWidget {
                 builder: (context) {
                   if (courseProvider.isLoading) return const Center(child: CircularProgressIndicator());
                   if (courseProvider.error != null) return ErrorView(message: courseProvider.error!, onRetry: courseProvider.listenToCoursesStream);
-                  if (courseProvider.courses.isEmpty) return const Center(child: Text('Data course belum tersedia'));
+                  if (displayCourses.isEmpty) return const Center(child: Text('Data course tidak ditemukan'));
                   
                   return ListView.builder(
-                    itemCount: courseProvider.courses.length,
+                    itemCount: displayCourses.length,
                     itemBuilder: (context, index) {
-                      final course = courseProvider.courses[index];
+                      final course = displayCourses[index];
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: ListTile(
@@ -272,6 +334,26 @@ class ProviderScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(BuildContext context, String label, String statusValue) {
+    final provider = context.watch<CourseProvider>();
+    final isSelected = provider.selectedStatus == statusValue;
+
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          provider.setSelectedStatus(statusValue);
+        }
+      },
+      selectedColor: Colors.blue.shade100,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.blue.shade900 : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );
   }
