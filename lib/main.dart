@@ -124,7 +124,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 13',
+      title: 'Course Explorer v2 - Tahap 14',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -176,7 +176,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 13: Supabase INSERT'),
+        title: const Text('Tahap 14: Supabase UPDATE'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
