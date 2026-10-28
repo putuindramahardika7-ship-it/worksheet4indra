@@ -2,51 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'models/course.dart';
 import 'services/course_api_service.dart';
-import 'widgets/error_view.dart'; // Import ErrorView yang baru dibuat
+import 'widgets/error_view.dart';
+import 'screens/course_form_page.dart'; // Import halaman form
 
 const String studentName = 'Putu Indra Mahardika';
 const String studentId = '2415051003';
-// Pastikan URL ini benar
 const String apiBaseUrl = 'https://course-api-pearl.vercel.app'; 
 
 void main() {
   runApp(
     ChangeNotifierProvider(
-      // TAHAP 5: Panggil loadCourses() satu kali saat provider dibuat
       create: (_) => CourseProvider()..loadCourses(),
       child: const CourseExplorerV2App(),
     ),
   );
 }
 
-// -------------------------------------------------------------------------
-// TAHAP 5: Mengelola state Loading, Success, Error, dan Empty di Provider
-// -------------------------------------------------------------------------
 class CourseProvider extends ChangeNotifier {
-  List<Course> _courses = []; // Data awal dikosongkan (tidak hardcode lagi)
+  List<Course> _courses = [];
   bool _isLoading = false;
+  bool _isSaving = false; // TAHAP 6: Flag isSaving
   String? _error;
 
   List<Course> get courses => _courses;
   bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving; // Getter isSaving
   String? get error => _error;
 
   int get favoriteCount => _courses.where((c) => c.isFavorite).length;
 
-  // Fungsi mengambil data dari Service
   Future<void> loadCourses() async {
     _isLoading = true;
     _error = null;
-    notifyListeners(); // Beritahu UI untuk menampilkan loading
+    notifyListeners();
 
     try {
       final service = CourseApiService(apiBaseUrl);
       _courses = await service.getCourses();
     } catch (e) {
-      _error = e.toString(); // Tangkap pesan error jika gagal
+      _error = e.toString();
     } finally {
       _isLoading = false;
-      notifyListeners(); // Beritahu UI bahwa proses selesai (sukses/gagal)
+      notifyListeners();
+    }
+  }
+
+  // TAHAP 6: Fungsi menambahkan data (POST)
+  Future<bool> addCourse(Course course) async {
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final service = CourseApiService(apiBaseUrl);
+      await service.createCourse(course);
+      await loadCourses(); // Refresh data setelah berhasil POST
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
     }
   }
 
@@ -64,7 +81,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 5',
+      title: 'Course Explorer v2 - Tahap 6',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -80,17 +97,26 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 5: Async State UI'),
+        title: const Text('Tahap 6: HTTP POST'),
+        actions: [
+          // TAHAP 6: Tombol untuk membuka halaman form
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CourseFormPage()),
+              );
+            },
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '$studentId\n$studentName',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('$studentId\n$studentName', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Card(
               color: Colors.blue.shade50,
@@ -107,29 +133,16 @@ class ProviderScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Daftar Kursus (Data dari API API):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Daftar Kursus:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
 
-            // TAHAP 5: Menampilkan UI berdasarkan State (Loading/Error/Empty/Success)
             Expanded(
               child: Builder(
                 builder: (context) {
-                  // 1. Loading State
-                  if (courseProvider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  // 2. Error State
-                  if (courseProvider.error != null) {
-                    return ErrorView(
-                      message: courseProvider.error!,
-                      onRetry: courseProvider.loadCourses,
-                    );
-                  }
-                  // 3. Empty State
-                  if (courseProvider.courses.isEmpty) {
-                    return const Center(child: Text('Data course belum tersedia'));
-                  }
-                  // 4. Success State (Tampilkan ListView)
+                  if (courseProvider.isLoading) return const Center(child: CircularProgressIndicator());
+                  if (courseProvider.error != null) return ErrorView(message: courseProvider.error!, onRetry: courseProvider.loadCourses);
+                  if (courseProvider.courses.isEmpty) return const Center(child: Text('Data course belum tersedia'));
+                  
                   return ListView.builder(
                     itemCount: courseProvider.courses.length,
                     itemBuilder: (context, index) {
@@ -141,9 +154,7 @@ class ProviderScreen extends StatelessWidget {
                           subtitle: Text('Kode: ${course.code} | SKS: ${course.credits} | Status: ${course.status.toUpperCase()}'),
                           trailing: IconButton(
                             icon: Icon(course.isFavorite ? Icons.favorite : Icons.favorite_border, color: course.isFavorite ? Colors.red : Colors.grey),
-                            onPressed: () {
-                              context.read<CourseProvider>().toggleFavorite(course.code);
-                            },
+                            onPressed: () => context.read<CourseProvider>().toggleFavorite(course.code),
                           ),
                         ),
                       );
@@ -155,7 +166,6 @@ class ProviderScreen extends StatelessWidget {
           ],
         ),
       ),
-      // TAHAP 5: FloatingActionButton diganti menjadi tombol Refresh Manual
       floatingActionButton: FloatingActionButton(
         onPressed: courseProvider.loadCourses,
         child: const Icon(Icons.refresh),
