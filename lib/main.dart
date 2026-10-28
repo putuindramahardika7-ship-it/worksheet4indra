@@ -66,7 +66,6 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
-  // TAHAP 7: Method memperbarui data (PUT)
   Future<bool> updateCourse(int id, Course course) async {
     _isSaving = true;
     _error = null;
@@ -75,7 +74,7 @@ class CourseProvider extends ChangeNotifier {
     try {
       final service = CourseApiService(apiBaseUrl);
       await service.updateCourse(id, course);
-      await loadCourses(); // Refresh data setelah update
+      await loadCourses();
       return true;
     } catch (e) {
       _error = e.toString();
@@ -83,6 +82,20 @@ class CourseProvider extends ChangeNotifier {
     } finally {
       _isSaving = false;
       notifyListeners();
+    }
+  }
+
+  // TAHAP 8: Method menghapus data (DELETE)
+  Future<bool> deleteCourse(int id) async {
+    _error = null;
+    try {
+      final service = CourseApiService(apiBaseUrl);
+      await service.deleteCourse(id);
+      await loadCourses(); // Refresh daftar data setelah dihapus
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
     }
   }
 
@@ -100,7 +113,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 7',
+      title: 'Course Explorer v2 - Tahap 8',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -110,13 +123,59 @@ class CourseExplorerV2App extends StatelessWidget {
 class ProviderScreen extends StatelessWidget {
   const ProviderScreen({super.key});
 
+  // TAHAP 8: Fungsi Konfirmasi Hapus Data
+  void _confirmDelete(BuildContext context, Course course) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Konfirmasi Hapus'),
+        content: Text('Apakah Anda yakin ingin menghapus course "${course.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Tutup dialog
+              
+              if (course.id != null) {
+                final success = await context.read<CourseProvider>().deleteCourse(course.id!);
+                
+                if (!context.mounted) return;
+                
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Course berhasil dihapus!'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal menghapus: ${context.read<CourseProvider>().error}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final courseProvider = context.watch<CourseProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 7: HTTP PUT/PATCH'),
+        title: const Text('Tahap 8: HTTP DELETE'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -173,7 +232,6 @@ class ProviderScreen extends StatelessWidget {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // TAHAP 7: Tombol Edit (Pensil)
                               IconButton(
                                 icon: const Icon(Icons.edit, color: Colors.blue),
                                 onPressed: () {
@@ -184,6 +242,11 @@ class ProviderScreen extends StatelessWidget {
                                     ),
                                   );
                                 },
+                              ),
+                              // TAHAP 8: Tombol Delete (Sampah)
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _confirmDelete(context, course),
                               ),
                               IconButton(
                                 icon: Icon(course.isFavorite ? Icons.favorite : Icons.favorite_border, color: course.isFavorite ? Colors.red : Colors.grey),
