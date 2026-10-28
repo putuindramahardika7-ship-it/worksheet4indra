@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/course.dart';
-import 'services/course_supabase_service.dart'; // Import Supabase Service
+import 'services/course_supabase_service.dart';
 import 'repositories/course_repository.dart';
 import 'widgets/error_view.dart';
 import 'screens/course_form_page.dart';
@@ -21,7 +21,6 @@ Future<void> main() async {
     anonKey: supabaseAnonKey,
   );
 
-  // TAHAP 12: Mengganti DataSource dari REST API ke Supabase Service
   final repository = CourseRepository(CourseSupabaseService());
 
   runApp(
@@ -125,7 +124,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 12',
+      title: 'Course Explorer v2 - Tahap 13',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -177,7 +176,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 12: Supabase SELECT'),
+        title: const Text('Tahap 13: Supabase INSERT'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -212,7 +211,7 @@ class ProviderScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Daftar Kursus (dari Database Supabase):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Daftar Kursus (Supabase Backend):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
 
             Expanded(

@@ -5,7 +5,6 @@ import 'course_data_source.dart';
 class CourseSupabaseService implements CourseDataSource {
   final SupabaseClient _client = Supabase.instance.client;
 
-  // TAHAP 12: Membaca (SELECT) seluruh data dari tabel 'courses' Supabase
   @override
   Future<List<Course>> getCourses() async {
     final response = await _client
@@ -18,9 +17,16 @@ class CourseSupabaseService implements CourseDataSource {
         .toList();
   }
 
+  // TAHAP 13: Memasukkan (INSERT) data course baru ke tabel 'courses' Supabase
   @override
   Future<Course> createCourse(Course course) async {
-    throw UnimplementedError('Akan diimplementasikan di Tahap 13');
+    final response = await _client
+        .from('courses')
+        .insert(course.toJson())
+        .select()
+        .single();
+
+    return Course.fromJson(response);
   }
 
   @override
