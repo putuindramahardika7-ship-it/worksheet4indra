@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'models/course.dart';
 import 'services/course_api_service.dart';
 import 'widgets/error_view.dart';
-import 'screens/course_form_page.dart'; // Import halaman form
+import 'screens/course_form_page.dart';
 
 const String studentName = 'Putu Indra Mahardika';
 const String studentId = '2415051003';
@@ -21,12 +21,12 @@ void main() {
 class CourseProvider extends ChangeNotifier {
   List<Course> _courses = [];
   bool _isLoading = false;
-  bool _isSaving = false; // TAHAP 6: Flag isSaving
+  bool _isSaving = false;
   String? _error;
 
   List<Course> get courses => _courses;
   bool get isLoading => _isLoading;
-  bool get isSaving => _isSaving; // Getter isSaving
+  bool get isSaving => _isSaving;
   String? get error => _error;
 
   int get favoriteCount => _courses.where((c) => c.isFavorite).length;
@@ -47,7 +47,6 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
-  // TAHAP 6: Fungsi menambahkan data (POST)
   Future<bool> addCourse(Course course) async {
     _isSaving = true;
     _error = null;
@@ -56,7 +55,27 @@ class CourseProvider extends ChangeNotifier {
     try {
       final service = CourseApiService(apiBaseUrl);
       await service.createCourse(course);
-      await loadCourses(); // Refresh data setelah berhasil POST
+      await loadCourses();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  // TAHAP 7: Method memperbarui data (PUT)
+  Future<bool> updateCourse(int id, Course course) async {
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final service = CourseApiService(apiBaseUrl);
+      await service.updateCourse(id, course);
+      await loadCourses(); // Refresh data setelah update
       return true;
     } catch (e) {
       _error = e.toString();
@@ -81,7 +100,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 6',
+      title: 'Course Explorer v2 - Tahap 7',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -97,9 +116,8 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 6: HTTP POST'),
+        title: const Text('Tahap 7: HTTP PUT/PATCH'),
         actions: [
-          // TAHAP 6: Tombol untuk membuka halaman form
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -152,9 +170,26 @@ class ProviderScreen extends StatelessWidget {
                         child: ListTile(
                           title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text('Kode: ${course.code} | SKS: ${course.credits} | Status: ${course.status.toUpperCase()}'),
-                          trailing: IconButton(
-                            icon: Icon(course.isFavorite ? Icons.favorite : Icons.favorite_border, color: course.isFavorite ? Colors.red : Colors.grey),
-                            onPressed: () => context.read<CourseProvider>().toggleFavorite(course.code),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // TAHAP 7: Tombol Edit (Pensil)
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CourseFormPage(courseToEdit: course),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(course.isFavorite ? Icons.favorite : Icons.favorite_border, color: course.isFavorite ? Colors.red : Colors.grey),
+                                onPressed: () => context.read<CourseProvider>().toggleFavorite(course.code),
+                              ),
+                            ],
                           ),
                         ),
                       );
