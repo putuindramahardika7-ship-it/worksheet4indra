@@ -17,6 +17,16 @@ class CourseSupabaseService implements CourseDataSource {
         .toList();
   }
 
+  // TAHAP 16: Stream data realtime dari Supabase
+  @override
+  Stream<List<Course>> getCoursesStream() {
+    return _client
+        .from('courses')
+        .stream(primaryKey: ['id'])
+        .order('id', ascending: true)
+        .map((data) => data.map((json) => Course.fromJson(json)).toList());
+  }
+
   @override
   Future<Course> createCourse(Course course) async {
     final response = await _client
@@ -36,7 +46,6 @@ class CourseSupabaseService implements CourseDataSource {
         .eq('id', id);
   }
 
-  // TAHAP 15: Menghapus (DELETE) data course di tabel 'courses' Supabase berdasarkan ID
   @override
   Future<void> deleteCourse(int id) async {
     await _client

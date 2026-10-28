@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,7 +26,7 @@ Future<void> main() async {
 
   runApp(
     ChangeNotifierProvider(
-      create: (_) => CourseProvider(repository)..loadCourses(),
+      create: (_) => CourseProvider(repository)..listenToCoursesStream(),
       child: const CourseExplorerV2App(),
     ),
   );
@@ -36,9 +37,10 @@ class CourseProvider extends ChangeNotifier {
   final CourseRepository repository;
 
   List<Course> _courses = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _isSaving = false;
   String? _error;
+  StreamSubscription<List<Course>>? _coursesSubscription;
 
   List<Course> get courses => _courses;
   bool get isLoading => _isLoading;
@@ -47,19 +49,25 @@ class CourseProvider extends ChangeNotifier {
 
   int get favoriteCount => _courses.where((c) => c.isFavorite).length;
 
-  Future<void> loadCourses() async {
+  // TAHAP 16: Berlangganan data Realtime dari Supabase Stream
+  void listenToCoursesStream() {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    try {
-      _courses = await repository.getCourses();
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    _coursesSubscription?.cancel();
+    _coursesSubscription = repository.getCoursesStream().listen(
+      (data) {
+        _courses = data;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        _error = e.toString();
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   Future<bool> addCourse(Course course) async {
@@ -69,7 +77,6 @@ class CourseProvider extends ChangeNotifier {
 
     try {
       await repository.createCourse(course);
-      await loadCourses();
       return true;
     } catch (e) {
       _error = e.toString();
@@ -87,7 +94,6 @@ class CourseProvider extends ChangeNotifier {
 
     try {
       await repository.updateCourse(id, course);
-      await loadCourses();
       return true;
     } catch (e) {
       _error = e.toString();
@@ -102,7 +108,6 @@ class CourseProvider extends ChangeNotifier {
     _error = null;
     try {
       await repository.deleteCourse(id);
-      await loadCourses();
       return true;
     } catch (e) {
       _error = e.toString();
@@ -115,6 +120,12 @@ class CourseProvider extends ChangeNotifier {
     course.isFavorite = !course.isFavorite;
     notifyListeners();
   }
+
+  @override
+  void dispose() {
+    _coursesSubscription?.cancel();
+    super.dispose();
+  }
 }
 
 class CourseExplorerV2App extends StatelessWidget {
@@ -124,7 +135,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 15',
+      title: 'Course Explorer v2 - Tahap 16',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -154,7 +165,7 @@ class ProviderScreen extends StatelessWidget {
                 if (!context.mounted) return;
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Course berhasil dihapus dari Supabase!'), backgroundColor: Colors.red),
+                    const SnackBar(content: Text('Course berhasil dihapus!'), backgroundColor: Colors.red),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +187,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 15: Supabase DELETE'),
+        title: const Text('Tahap 16: Supabase Realtime Stream'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -211,14 +222,14 @@ class ProviderScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Daftar Kursus (Supabase Backend):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Daftar Kursus (Realtime Live Sync):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
 
             Expanded(
               child: Builder(
                 builder: (context) {
                   if (courseProvider.isLoading) return const Center(child: CircularProgressIndicator());
-                  if (courseProvider.error != null) return ErrorView(message: courseProvider.error!, onRetry: courseProvider.loadCourses);
+                  if (courseProvider.error != null) return ErrorView(message: courseProvider.error!, onRetry: courseProvider.listenToCoursesStream);
                   if (courseProvider.courses.isEmpty) return const Center(child: Text('Data course belum tersedia'));
                   
                   return ListView.builder(
@@ -261,10 +272,6 @@ class ProviderScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: courseProvider.loadCourses,
-        child: const Icon(Icons.refresh),
       ),
     );
   }
