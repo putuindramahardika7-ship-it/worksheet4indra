@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'models/course.dart';
 import 'services/course_api_service.dart';
+import 'repositories/course_repository.dart';
 import 'widgets/error_view.dart';
 import 'screens/course_form_page.dart';
 
@@ -10,15 +11,21 @@ const String studentId = '2415051003';
 const String apiBaseUrl = 'https://course-api-pearl.vercel.app'; 
 
 void main() {
+  // TAHAP 9: Assembly Service -> Repository -> Provider
+  final repository = CourseRepository(CourseApiService(apiBaseUrl));
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => CourseProvider()..loadCourses(),
+      create: (_) => CourseProvider(repository)..loadCourses(),
       child: const CourseExplorerV2App(),
     ),
   );
 }
 
 class CourseProvider extends ChangeNotifier {
+  CourseProvider(this.repository);
+  final CourseRepository repository;
+
   List<Course> _courses = [];
   bool _isLoading = false;
   bool _isSaving = false;
@@ -37,8 +44,7 @@ class CourseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final service = CourseApiService(apiBaseUrl);
-      _courses = await service.getCourses();
+      _courses = await repository.getCourses();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -53,8 +59,7 @@ class CourseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final service = CourseApiService(apiBaseUrl);
-      await service.createCourse(course);
+      await repository.createCourse(course);
       await loadCourses();
       return true;
     } catch (e) {
@@ -72,8 +77,7 @@ class CourseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final service = CourseApiService(apiBaseUrl);
-      await service.updateCourse(id, course);
+      await repository.updateCourse(id, course);
       await loadCourses();
       return true;
     } catch (e) {
@@ -85,13 +89,11 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
-  // TAHAP 8: Method menghapus data (DELETE)
   Future<bool> deleteCourse(int id) async {
     _error = null;
     try {
-      final service = CourseApiService(apiBaseUrl);
-      await service.deleteCourse(id);
-      await loadCourses(); // Refresh daftar data setelah dihapus
+      await repository.deleteCourse(id);
+      await loadCourses();
       return true;
     } catch (e) {
       _error = e.toString();
@@ -113,7 +115,7 @@ class CourseExplorerV2App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Course Explorer v2 - Tahap 8',
+      title: 'Course Explorer v2 - Tahap 9',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ProviderScreen(),
     );
@@ -123,7 +125,6 @@ class CourseExplorerV2App extends StatelessWidget {
 class ProviderScreen extends StatelessWidget {
   const ProviderScreen({super.key});
 
-  // TAHAP 8: Fungsi Konfirmasi Hapus Data
   void _confirmDelete(BuildContext context, Course course) {
     showDialog(
       context: context,
@@ -138,26 +139,17 @@ class ProviderScreen extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
-              Navigator.pop(dialogContext); // Tutup dialog
-              
+              Navigator.pop(dialogContext);
               if (course.id != null) {
                 final success = await context.read<CourseProvider>().deleteCourse(course.id!);
-                
                 if (!context.mounted) return;
-                
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Course berhasil dihapus!'),
-                      backgroundColor: Colors.red,
-                    ),
+                    const SnackBar(content: Text('Course berhasil dihapus!'), backgroundColor: Colors.red),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal menghapus: ${context.read<CourseProvider>().error}'),
-                      backgroundColor: Colors.red,
-                    ),
+                    SnackBar(content: Text('Gagal menghapus: ${context.read<CourseProvider>().error}'), backgroundColor: Colors.red),
                   );
                 }
               }
@@ -175,7 +167,7 @@ class ProviderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tahap 8: HTTP DELETE'),
+        title: const Text('Tahap 9: Repository Pattern'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -210,7 +202,7 @@ class ProviderScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Daftar Kursus:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Daftar Kursus (via Repository):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
 
             Expanded(
@@ -237,13 +229,10 @@ class ProviderScreen extends StatelessWidget {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CourseFormPage(courseToEdit: course),
-                                    ),
+                                    MaterialPageRoute(builder: (context) => CourseFormPage(courseToEdit: course)),
                                   );
                                 },
                               ),
-                              // TAHAP 8: Tombol Delete (Sampah)
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () => _confirmDelete(context, course),
